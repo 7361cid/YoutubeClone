@@ -101,10 +101,7 @@ class UserProfile(models.Model):
     birth_date = models.DateField(null=True, blank=True, verbose_name='Дата рождения')
 
     def __str__(self):
-        """
-        Возвращение строки
-        """
-        return self.user.username
+        return f"{self.user.username} Аватар {self.avatar}"
 
 
 def path_and_rename(instance, filename):

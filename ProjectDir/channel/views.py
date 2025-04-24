@@ -92,13 +92,15 @@ class UserDetail(APIView):
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            user_profile = UserProfile.objects.get_or_create(user=user)
+            user_profile = UserProfile.objects.get_or_create(user=user)[0]
         except UserProfile.DoesNotExist:
             return Response({"error": "UserProfile not found"}, status=status.HTTP_404_NOT_FOUND)
+        print(f"USER PROFILE DEBUG2 {user_profile}")
         serializer = UserSerializer(user)
-        serializer_profile = UserProfileSerializer(user_profile)
         data = dict(serializer.data)
-        data["profile"] = serializer_profile.data
+        profile_data = {"avatar": str(user_profile.avatar), "birthday": str(user_profile.birth_date)}
+        data["profile"] = profile_data
+        print(f"USER PROFILE DEBUG {data}")
         return Response(data)
 # http://localhost:4173/video/27
 class AnotherUserDetail(APIView):
@@ -136,6 +138,7 @@ class UserVideosDetail(APIView):
         serializer = VideoSerializer(videos, many=True)
         return Response(serializer.data)
 
+
 class VideoDetail(APIView):
     def get(self, request, id):
         print(f"here VideoDetail {id}")
@@ -153,6 +156,7 @@ class VideoDetail(APIView):
         print(f"here VideoDetail data2 {data} type {type(data)}")
         return Response(data)
 
+
 class VideoUpload(APIView):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
@@ -163,10 +167,7 @@ class VideoUpload(APIView):
         if serializer.is_valid():
             instance = serializer.save()
             print(f"VideoUpload {instance} {type(instance)} {instance.videofile}")
-            # Создание превью для ролика
-            # MEDIA_ROOT os.path.join(settings.MEDIA_ROOT, 'media/')
             video_input_path = os.path.join(settings.MEDIA_ROOT, str(instance.videofile))
-            #video_input_path.replace('/', '\\')
             img_output_path = str(video_input_path).replace(".mp4", "") + "thumb.jpg"
             print(f"THUMB {video_input_path} {img_output_path}")
             subprocess.call([r'C:\FFmpeg\bin\ffmpeg.exe', '-i', video_input_path, '-ss', '00:00:00.000', '-vframes', '1', img_output_path])
@@ -177,6 +178,7 @@ class VideoUpload(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class AvatarUpload(APIView):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
@@ -185,7 +187,6 @@ class AvatarUpload(APIView):
         file = request.data["file"]
         user = User.objects.get(email=request.user)
         user_profile = UserProfile.objects.get_or_create(user=user)[0]
-        print(f"AvatarUpload {user_profile}")
         name=f"ava{uuid4()}.png"
         user_profile.avatar.save(name, File(file), save=True)
         return Response("OK", status=status.HTTP_200_OK)
@@ -196,7 +197,8 @@ class VideoView(APIView):
         video = Video.objects.get(id=request.data["id"])
         video.views_count = video.views_count + 1
         video.save()
-        return Response("OK", status=status.HTTP_200_OK)
+        return Response({"views": video.views_count}, status=status.HTTP_200_OK)
+
 
 class VideoLike(APIView):
     def post(self, request):
@@ -205,9 +207,15 @@ class VideoLike(APIView):
             user_like = UserLikes.objects.get(user_id=request.user.id, video_id=video.id)
         except UserLikes.DoesNotExist:
             user_like = UserLikes.objects.create(user_id=request.user.id, video_id=video.id)
-        if not user_like:
+        print(f"VideoLike {user_like} {user_like.flag}")
+        if not user_like.flag:
             video.likes_count = video.likes_count + 1
             video.save()
             user_like.flag = True
             user_like.save()
-        return Response("OK", status=status.HTTP_200_OK)
+        else:
+            video.likes_count = video.likes_count - 1
+            video.save()
+            user_like.flag = False
+            user_like.save()
+        return Response({"likes": video.likes_count}, status=status.HTTP_200_OK)

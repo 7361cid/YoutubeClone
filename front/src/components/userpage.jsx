@@ -48,7 +48,7 @@ async function GetUserData() {
             setUser(resp.data);
             console.log("GetUserDataCall2", resp.data);
             console.log("GetUserDataCall Profile", resp.data.profile);
-            resp.data.profile.avatar = 'http://127.0.0.1:8000' + resp.data.profile.avatar
+            resp.data.profile.avatar = 'http://127.0.0.1:8000/media/' + resp.data.profile.avatar
             setProfile(resp.data.profile);
         } catch (error) {
             console.log("GetUserDataError", error);
@@ -65,7 +65,7 @@ async function GetVideosData() {
              resp.data.forEach(function(entry) {
                 entry.videofile = 'http://127.0.0.1:8000' + entry.videofile;
                 entry.thumb = 'http://127.0.0.1:8000' + entry.thumb;
-                entry.url = 'http://127.0.0.1:3000/video/' + entry.id;
+                entry.url = ' http://localhost:4173/video/' + entry.id;
              });
              setVideoData(resp.data);
 
@@ -119,44 +119,84 @@ const handleUpload = async () => {
       }
    };
         return (
-                     <div> Страница пользователя {user.email}
-                        <img src={Profile.avatar} width='400' alt="альтернативный текст"/>
-                        <div> Форма Смены аватара </div>
-                        <form id="avatar_form" enctype="multipart/form-data">
-                            <div class="form-group">
-                                <label for="id_avatar">Choose img for avatar </label>
-                                <input type="file" onChange={handleFileImgChange} class="form-control-file" id="id_avatar" />
-                            </div>
-                            <button type="submit" onClick={handleImgUpload} class="btn btn-primary">Upload</button>
-                        </form>
-                        <div> Форма загрузки видео </div>
-                        <form id="video_form" enctype="multipart/form-data">
-                            <div class="form-group">
-                                <label for="id_video">Choose video </label>
-                                <input type="file" onChange={handleFileChange} class="form-control-file" id="id_video" />
-                                <input type="text" value={VideoTitle} onChange={(e) => setVideoTitle(e.target.value)} id="id_title" />
-                            </div>
-                            <button type="submit" onClick={handleUpload} class="btn btn-primary">Upload</button>
-                        </form>
-                        <div> Форма Показа видео VideoData.videofile {VideoData.videofile} </div>
-                            < div >
-                                {VideoData.map((Video, index) => {
-                                        return (
-                                          <div key={index}>
-                                                <p> {Video.name} </p>
-                                                <p> Просмотры: {Video.views_count} </p>
-                                                <p> Лайки: {Video.likes_count}</p>
-                                                <video width='400' controls>
-                                                    <source src={Video.videofile}  type='video/mp4'/>
-                                                </video>
-                                                <a href={Video.url}>
-                                                    <img src={Video.thumb} width='400' alt="альтернативный текст"/>
-                                                </a>
-                                          </div>
-                                        );
-                                      })}
-                            </div>
-                     </div>
+
+                    <div className="max-w-2xl mx-auto mt-10 space-y-8">
+                      {/* Блок профиля */}
+                      <div className="bg-white p-6 rounded-xl shadow-md text-center">
+                        <img
+                          src={Profile.avatar}
+                          alt="Аватар"
+                          className="w-32 h-32 mx-auto rounded-full mb-4 object-cover"
+                        />
+                        <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                          {user.email}
+                        </h2>
+                        <label className="block mb-2 text-sm text-gray-600">
+                          Сменить аватар:
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileImgChange}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4
+                            file:rounded-full file:border-0 file:text-sm file:font-semibold
+                            file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                        <button type="submit" onClick={handleImgUpload} className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Смена</button>
+                      </div>
+
+                      {/* Форма загрузки видео */}
+                      <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
+                        <div>
+                          <label className="block mb-1 text-sm text-gray-600">
+                            Название видео:
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Введите название"
+                            value={VideoTitle}
+                            onChange={(e) => setVideoTitle(e.target.value)}
+                            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring focus:border-blue-300"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block mb-1 text-sm text-gray-600">
+                            Загрузить видео:
+                          </label>
+                          <input
+                            type="file"
+                            accept="video/*"
+                            onChange={handleFileChange}
+                            className="text-sm"
+                          />
+                        </div>
+
+                        <button
+                          onClick={handleUpload}
+                          className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        >
+                          Сохранить
+                        </button>
+                      </div>
+
+                      {/* Просмотр загруженных видео */}
+                      <div className="space-y-6">
+                        {VideoData.map((Video, index) => (
+                          <div key={index} className="bg-white p-4 rounded shadow">
+                            <p className="font-semibold">{Video.name}</p>
+                            <p>Просмотры: {Video.views_count}</p>
+                            <p>Лайки: {Video.likes_count}</p>
+                            <video width="100%" controls className="my-2">
+                              <source src={Video.videofile} type="video/mp4" />
+                            </video>
+                            <a href={Video.url}>
+                              <img src={Video.thumb} width="100%" alt="Превью видео" />
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
         )
 }
 export default UserPage;
